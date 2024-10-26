@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialKeyguardLayout="@layout/story_app_widget"
+    android:initialLayout="@layout/story_app_widget"
+    android:minHeight="110dp"
+    android:minWidth="250dp"
+    android:previewImage="@drawable/image_dicoding"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />
