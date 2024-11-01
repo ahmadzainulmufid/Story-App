@@ -1,5 +1,7 @@
 package com.example.storyapp.data.response
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 
 data class StoryResponse(
@@ -14,8 +16,10 @@ data class StoryResponse(
 	val message: String
 )
 
+@Entity(tableName = "story")
 data class ListStoryItem(
 
+	@PrimaryKey
 	@field:SerializedName("photoUrl")
 	val photoUrl: String,
 

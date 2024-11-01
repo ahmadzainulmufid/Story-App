@@ -48,4 +48,13 @@
     <string name="ya">Ya</string>
     <string name="tidak">Tidak</string>
     <string name="confirmation_upload">Apakah kamu tidak ingin melanjutkan berbagi pengalaman?</string>
+    <string name="title_activity_maps">Eksplorasi Peta</string>
+    <string name="normal_type">Tipe Normal</string>
+    <string name="satelite_type">Tipe Satelit</string>
+    <string name="terrain_type">Tipe Medan</string>
+    <string name="hybrid_type">Tipe Hibrid</string>
+    <string name="maps">Peta</string>
+    <string name="use_current_location">Tambahkan lokasi Anda saat ini?</string>
+    <string name="location_not_found">Lokasi tidak ditemukan</string>
+    <string name="retry">Coba lagi</string>
 </resources>

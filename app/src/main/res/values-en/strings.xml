@@ -48,4 +48,13 @@
     <string name="ya">Yes</string>
     <string name="tidak">No</string>
     <string name="confirmation_upload">Are you sure you don\'t want to continue sharing your experience?</string>
+    <string name="title_activity_maps">Map Exploration</string>
+    <string name="normal_type">Normal Type</string>
+    <string name="satelite_type">Satellite Type</string>
+    <string name="terrain_type">Terrain Type</string>
+    <string name="hybrid_type">Hybrid Type</string>
+    <string name="maps">Map</string>
+    <string name="use_current_location">Add your current location?</string>
+    <string name="location_not_found">Location not found</string>
+    <string name="retry">Retry</string>
 </resources>

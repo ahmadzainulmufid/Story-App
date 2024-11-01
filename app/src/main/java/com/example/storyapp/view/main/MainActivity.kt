@@ -3,26 +3,27 @@ package com.example.storyapp.view.main
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.view.View
+import android.view.Menu
+import android.view.MenuItem
 import android.view.WindowInsets
 import android.view.WindowManager
-import android.widget.Toast
-import androidx.core.util.Pair
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityOptionsCompat
+import androidx.core.util.Pair
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.storyapp.R
-import com.example.storyapp.data.result.Result
 import com.example.storyapp.databinding.ActivityMainBinding
-import com.example.storyapp.view.StoryAdapter
 import com.example.storyapp.view.ViewModelFactory
+import com.example.storyapp.view.adapter.LoadingStateAdapter
+import com.example.storyapp.view.adapter.StoryAdapter
 import com.example.storyapp.view.detail.DetailActivity
+import com.example.storyapp.view.maps.MapsActivity
 import com.example.storyapp.view.upload.UploadActivity
 import com.example.storyapp.view.welcome.WelcomeActivity
-import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
     private val viewModel by viewModels<MainViewModel> {
@@ -30,31 +31,37 @@ class MainActivity : AppCompatActivity() {
     }
     private lateinit var binding: ActivityMainBinding
     private lateinit var storyAdapter: StoryAdapter
+    private lateinit var mainViewModel: MainViewModel
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.maps -> startActivity(Intent(this, MapsActivity::class.java))
+            R.id.logout -> showLogoutConfirmationDialog()
+        }
+        return super.onOptionsItemSelected(item)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        supportActionBar?.apply {
-            title = "Story Apps"
-        }
+        supportActionBar?.title = "Story Apps"
 
         setupView()
         setupRecyclerView()
         setupObservers()
-        setupAction()
 
         onBackPressedDispatcher.addCallback(this) {
             showExitConfirmationDialog()
         }
 
-        viewModel.getSession().observe(this) { user ->
-            if (!user.isLogin) {
-                startActivity(Intent(this, WelcomeActivity::class.java))
-                finish()
-            }
-        }
+        mainViewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         binding.fabAdd.setOnClickListener {
             val intent = Intent(this, UploadActivity::class.java)
@@ -62,32 +69,6 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
-
-        viewModel.getStories().observe(this) { stories ->
-            when (stories) {
-                is Result.Error -> showSnackBar(stories.error)
-                Result.Loading -> showLoading(true)
-                is Result.Success -> {
-                    showLoading(false)
-                    storyAdapter.submitList(stories.data)
-                }
-            }
-        }
-
-    }
-
-    private fun showSnackBar(message: String) {
-        showLoading(false)
-        Snackbar.make(binding.root, message, Snackbar.LENGTH_SHORT).show()
-    }
-
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewModel.getStories()
     }
 
     private fun setupView() {
@@ -104,12 +85,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setupRecyclerView() {
-        binding.rvStories.layoutManager = LinearLayoutManager(this)
         storyAdapter = StoryAdapter { story, ivItemPhoto, tvItemName, tvItemDescription ->
             val intent = Intent(this, DetailActivity::class.java).apply {
                 putExtra("EXTRA_STORY_ID", story.id)
             }
-
             val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
                 this,
                 Pair(ivItemPhoto, "shared_image"),
@@ -118,7 +97,14 @@ class MainActivity : AppCompatActivity() {
             )
             startActivity(intent, options.toBundle())
         }
-        binding.rvStories.adapter = storyAdapter
+
+        binding.rvStories.apply {
+            layoutManager = LinearLayoutManager(this@MainActivity)
+            adapter = storyAdapter.withLoadStateHeaderAndFooter(
+                header = LoadingStateAdapter { storyAdapter.retry() },
+                footer = LoadingStateAdapter { storyAdapter.retry() }
+            )
+        }
     }
 
     private fun setupObservers() {
@@ -126,59 +112,44 @@ class MainActivity : AppCompatActivity() {
             if (!user.isLogin) {
                 startActivity(Intent(this, WelcomeActivity::class.java))
                 finish()
-            }
-        }
-
-        viewModel.getStories().observe(this) { result ->
-            when (result) {
-                is Result.Loading -> {
-                    binding.progressBar.visibility = View.VISIBLE
-                }
-                is Result.Success -> {
-                    binding.progressBar.visibility = View.GONE
-                    val stories = result.data
-                    storyAdapter.submitList(stories)
-                }
-                is Result.Error -> {
-                    binding.progressBar.visibility = View.GONE
-                    Toast.makeText(this, "Error: ${result.error}", Toast.LENGTH_SHORT).show()
-                }
+            } else {
+                loadStories(user.token)
             }
         }
     }
 
-    private fun setupAction() {
-        binding.logoutButton.setOnClickListener {
-            showLogoutConfirmationDialog()
+    private fun loadStories(token: String) {
+        viewModel.getStoryList(token).observe(this) { pagingData ->
+            storyAdapter.submitData(lifecycle, pagingData)
         }
     }
 
     private fun showLogoutConfirmationDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(R.string.logout)
-        builder.setMessage(R.string.logout_confirmation)
-        builder.setPositiveButton(R.string.ya) { _, _ ->
-            viewModel.logout()
-            val intent = Intent(this, WelcomeActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-            startActivity(intent)
-        }
-        builder.setNegativeButton(R.string.tidak) { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.logout)
+            .setMessage(R.string.logout_confirmation)
+            .setPositiveButton(R.string.ya) { _, _ ->
+                viewModel.logout()
+                val intent = Intent(this, WelcomeActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            }
+            .setNegativeButton(R.string.tidak) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun showExitConfirmationDialog() {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(R.string.exit)
-        builder.setMessage(R.string.logout_confirmation)
-        builder.setPositiveButton(R.string.ya) { _, _ ->
-            finish()
-        }
-        builder.setNegativeButton(R.string.tidak) { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.exit)
+            .setMessage(R.string.logout_confirmation)
+            .setPositiveButton(R.string.ya) { _, _ ->
+                finish()
+            }
+            .setNegativeButton(R.string.tidak) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 }

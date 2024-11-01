@@ -12,6 +12,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.storyapp.R
+import com.example.storyapp.data.pref.UserModel
 import com.example.storyapp.data.result.Result
 import com.example.storyapp.databinding.ActivityLoginBinding
 import com.example.storyapp.view.ViewModelFactory
@@ -50,11 +51,25 @@ class LoginActivity : AppCompatActivity() {
         binding.loginButton.setOnClickListener {
             val email = binding.edLoginEmail.text.toString()
             val password = binding.edLoginPassword.text.toString()
+
             viewModel.login(email, password).observe(this) { loginResponse ->
                 when (loginResponse) {
-                    is Result.Error -> showErrorDialog(loginResponse.error)
-                    Result.Loading -> showLoading(true)
-                    is Result.Success -> showSuccessDialog(loginResponse.data.email)
+                    is Result.Success -> {
+                        val loginResult = loginResponse.data.loginResult
+                        showSuccessDialog(loginResult.name)
+                        val userModel = UserModel(
+                            email = email,
+                            token = loginResult.token,
+                            isLogin = true
+                        )
+                        viewModel.saveSession(userModel)
+                    }
+                    is Result.Error -> {
+                        showErrorDialog(loginResponse.error)
+                    }
+                    is Result.Loading -> {
+                        showLoading(true)
+                    }
                 }
             }
         }

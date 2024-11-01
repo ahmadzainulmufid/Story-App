@@ -8,5 +8,6 @@ import okhttp3.RequestBody
 class UploadViewModel(
     private val storyRepository: StoryRepository,
 ): ViewModel() {
-    fun uploadStory(file : MultipartBody.Part, description: RequestBody) = storyRepository.uploadStory(file,description)
+    fun uploadStory(file : MultipartBody.Part, description: RequestBody, latRequestBody:RequestBody?,
+                    lonRequestBody:RequestBody?) = storyRepository.uploadStory(file,description, latRequestBody, lonRequestBody)
 }

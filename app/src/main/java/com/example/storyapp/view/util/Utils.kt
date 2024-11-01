@@ -1,4 +1,4 @@
-package com.example.storyapp.view
+package com.example.storyapp.view.util
 
 import android.content.ContentValues
 import android.content.Context

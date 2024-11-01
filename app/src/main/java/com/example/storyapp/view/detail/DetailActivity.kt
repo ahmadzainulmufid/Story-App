@@ -6,7 +6,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.example.storyapp.R
-import com.example.storyapp.data.response.Story // Make sure to import Story class
+import com.example.storyapp.data.response.Story
 import com.example.storyapp.databinding.ActivityDetailBinding
 import com.example.storyapp.view.ViewModelFactory
 import com.example.storyapp.data.result.Result
@@ -32,14 +32,20 @@ class DetailActivity : AppCompatActivity() {
         }
 
         val storyId = intent.getStringExtra("EXTRA_STORY_ID")
+        val lat = intent.getDoubleExtra("EXTRA_LAT", Double.NaN)
+        val lon = intent.getDoubleExtra("EXTRA_LON", Double.NaN)
+
         if (storyId != null) {
-            detailViewModel.getStoryById(storyId)
+            val latitude = if (lat.isNaN()) null else lat
+            val longitude = if (lon.isNaN()) null else lon
+            detailViewModel.getStoryById(storyId, latitude, longitude)
+
             detailViewModel.storyDetail.observe(this) { result ->
                 when (result) {
                     is Result.Loading -> showLoading(true)
                     is Result.Success -> {
                         showLoading(false)
-                        populateStoryDetail(result.data.story) // Update to access the story from DetailResponse
+                        populateStoryDetail(result.data.story)
                     }
                     is Result.Error -> {
                         showLoading(false)

@@ -48,7 +48,6 @@
         android:layout_width="0dp"
         android:layout_height="191dp"
         android:layout_marginTop="20dp"
-        android:autofillHints=""
         android:background="@android:drawable/editbox_background"
         android:gravity="top"
         android:hint="@string/description"
@@ -58,6 +57,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/btnCamera" />
 
+    <CheckBox
+        android:id="@+id/cb_current_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/use_current_location"
+        app:layout_constraintTop_toBottomOf="@id/ed_add_description"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp" />
+
     <Button
         android:id="@+id/button_add"
         android:layout_width="0dp"
@@ -65,7 +73,7 @@
         android:layout_marginTop="20dp"
         android:text="@string/upload"
         android:textColor="@android:color/white"
-        app:layout_constraintTop_toBottomOf="@id/ed_add_description"
+        app:layout_constraintTop_toBottomOf="@id/cb_current_location"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
